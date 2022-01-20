@@ -5,4 +5,4 @@ This code has only been tested with the Renogy 12V 200Ah Lithium Iron Phosphate 
 
 See this code in action at: https://chadj.github.io/gpedal/
 
-This web app will only work in Chrome (android / desktop / derivatives).  On Apple devices you can use WebBLE (https://apps.apple.com/us/app/webble/id1193531073) or Bluefy (https://apps.apple.com/us/app/bluefy-web-ble-browser/id1492822055).
+This web app will only work in Chrome (android / desktop / derivatives).  On Apple devices you can use [WebBLE](https://apps.apple.com/us/app/webble/id1193531073) or [Bluefy](https://apps.apple.com/us/app/bluefy-web-ble-browser/id1492822055).
