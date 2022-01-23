@@ -78,9 +78,17 @@
             e.preventDefault();
             
             (async function() {
-                let device = await navigator.bluetooth.requestDevice({
-                    filters: [{services: [0xFFD0]}]
-                });
+                let device;
+                if(navigator.userAgent.toLowerCase().includes('bluefy')) {
+                    device = await navigator.bluetooth.requestDevice({
+                        filters: [{services: [0xFFD0]}]
+                    });
+                } else {
+                    device = await navigator.bluetooth.requestDevice({
+                        filters: [{services: [0xFFD0]}],
+                        optionalServices: [0xFFF0]
+                    });
+                }
                 let server = await device.gatt.connect();
 
                 let rxService = await server.getPrimaryService(0xFFD0);
