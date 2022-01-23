@@ -79,8 +79,7 @@
             
             (async function() {
                 let device = await navigator.bluetooth.requestDevice({
-                    filters: [{services: [0xFFD0]}],
-                    optionalServices: [0xFFF0]
+                    filters: [{services: [0xFFD0]}]
                 });
                 let server = await device.gatt.connect();
 
