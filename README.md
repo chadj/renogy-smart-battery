@@ -3,6 +3,6 @@ Web application to monitor the Renogy 200ah LiFePO4 Battery over bluetooth (w/ W
 
 This code has only been tested with the Renogy 12V 200Ah Lithium Iron Phosphate Battery w/ Bluetooth.  That's the only one I own.  I developed this code to learn how to read the temperature off of the battery.  Ultimately I want to build a battery warmer driven off of an ESP32 microcontroller.
 
-See this code in action at: https://chadj.github.io/gpedal/
+See this code in action at: https://chadj.github.io/renogy-smart-battery/
 
 This web app will only work in Chrome (android / desktop / derivatives).  On Apple devices you can use [WebBLE](https://apps.apple.com/us/app/webble/id1193531073) or [Bluefy](https://apps.apple.com/us/app/bluefy-web-ble-browser/id1492822055).
