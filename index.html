@@ -109,7 +109,7 @@
                             let temps = [];
                             for(let x=1; x <= numSensors; x++) {
                                 let temp = (payload.getInt16(x*2) / 10) * (9/5) + 32;
-                                temps.push(temp);
+                                temps.push(fmt.format(temp));
                             }
                             $tf.value = temps.join(', ');
                         } else if(requestType === 'getLevels') {
