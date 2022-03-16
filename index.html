@@ -125,7 +125,7 @@
                             if(current > 0) {
                                 state = fmt.format(Math.abs((capacity - chargeLevel) / current)) + " hours till charged";
                             } else if(current < 0) {
-                                state = fmt.format(Math.abs(capacity / current)) + " hours till depleted";
+                                state = fmt.format(Math.abs(chargeLevel / current)) + " hours till depleted";
                             }
 
                             $vf.value = volt;
