@@ -55,6 +55,7 @@
                 <span class="input-group-text" id="cellvolts">Cell Volts</span>
                 <input type="text" class="form-control" id="cellvolts-form" aria-describedby="cellvolts" disabled="true">
             </div>
+            <div class="alert alert-primary" role="alert" id="msgalert" style="display: none"></div>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
@@ -74,6 +75,8 @@
         let $cvf = document.getElementById('cellvolts-form');
         let $sf = document.getElementById('state-form');
         let $wf = document.getElementById('watts-form');
+        let $msg = document.getElementById('msgalert');
+        
         $bc.onclick = (e) => {
             e.preventDefault();
             
@@ -204,20 +207,31 @@
                 };
 
                 $bcc.parentNode.removeChild($bcc);
+                $msg.style.display = 'none';
 
                 while(true) {
-                    //console.log('Starting battery read');
-                    await requestReady();
-                    await getTemps();
-                    await requestReady();
-                    await getLevels();
-                    await requestReady();
-                    await getCellVolts();
+                    try {
+                        //console.log('Starting battery read');
+                        await requestReady();
+                        await getTemps();
+                        await requestReady();
+                        await getLevels();
+                        await requestReady();
+                        await getCellVolts();
+                    } catch(err) {
+                        console.error(err);
+                        $msg.style.display = 'block';
+                        $msg.innerHTML = err;
+                    }
 
                     await timeout(10000);
                 }
 
-            })().catch(console.error);
+            })().catch((err) => {
+                console.error(err);
+                $msg.style.display = 'block';
+                $msg.innerHTML = err;
+            });
         };
     </script>
   </body>
