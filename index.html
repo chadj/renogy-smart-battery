@@ -74,18 +74,10 @@
                 <span class="input-group-text" id="temperatures">Temperatures</span>
                 <input type="text" class="form-control" id="temperatures-form" aria-describedby="temperatures" disabled="true">
             </div>
-            <!-- <div class="input-group mb-3">
-                <span class="input-group-text" id="temperaturesC">Temperatures (°C)</span>
-                <input type="text" class="form-control" id="temperaturesC-form" aria-describedby="temperatures in Celsius" disabled="true">
-            </div> -->
             <div class="input-group mb-3">
                 <span class="input-group-text" id="volt">Volt/Current</span>
                 <input type="text" class="form-control" id="volt-form" aria-describedby="volt" disabled="true">
             </div>
-            <!-- <div class="input-group mb-3">
-                <span class="input-group-text" id="current">Current</span>
-                <input type="text" class="form-control" id="current-form" aria-describedby="current" disabled="true">
-            </div> -->
             <div class="input-group mb-3">
                 <span class="input-group-text" id="level">Charge Level</span>
                 <input type="text" class="form-control" id="level-form" aria-describedby="level" disabled="true">
@@ -95,6 +87,8 @@
                 <input type="text" class="form-control" id="cellvolts-form" aria-describedby="cellvolts" disabled="true">
             </div>
             <div class="alert alert-primary" role="alert" id="msgalert" style="display: none"></div>
+
+            <div id="listContainer"></div>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
@@ -105,6 +99,12 @@
 
         const fmt = new Intl.NumberFormat('en-US', { maximumSignificantDigits: 4 });
         let currentArray = [];
+        let statisticsArray = JSON.parse(localStorage.getItem('statisticsArray'));
+        if (!statisticsArray) {
+            statisticsArray = [];
+        }
+
+        let date = Date.now();
 
         let $bcc = document.getElementById('battery-connect-container');
         let $bc = document.getElementById('battery-connect');
@@ -119,6 +119,13 @@
         let $msg = document.getElementById('msgalert');
         let elem = document.getElementById("myBar");
         let width = 1;
+
+        function getTimestamp (time) {
+        const pad = (n,s=2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
+        const d = new Date(time);
+        
+        return `${pad(d.getFullYear(),4)}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        }
         
         $bc.onclick = (e) => {
             e.preventDefault();
@@ -149,14 +156,14 @@
                     try {
                         const packet = event.target.value;
                         const payload = new DataView(packet.buffer, 3);
-                        console.log('payload', payload);
+                        // console.log('payload', payload);
 
                         if(requestType === 'getTemps') {
                             let numSensors = payload.getUint16(0);
                             let temps = [];
                             let tempsC = [];
                             for(let x=1; x <= numSensors; x++) {
-                                console.log('sensors', payload.getInt16(x*2));
+                                // console.log('sensors', payload.getInt16(x*2));
                                 let tempF = (payload.getInt16(x*2) / 10) * (9/5) + 32;
                                 let tempC = (payload.getInt16(x*2) / 10);
                                 temps.push(fmt.format(tempF));
@@ -193,8 +200,50 @@
                             elem.style.width = chargeLevel + "%";
                             elem.innerHTML = chargeLevel + "%";
 
-                            console.log('chargeLevel', chargeLevel);
-                            console.log('capacity', capacity);
+
+                            // create a timestamp, update on every new poll to store the last infos
+                            // let timestamp = Date.now();
+                            let timestamp = new Date;
+
+                            // create uID to store only the last value per day
+                            uniqueTimeID = '' + timestamp.getFullYear() + (timestamp.getMonth()+1) + (timestamp.getDate()+3) + '';
+
+                            manipulateEntry = statisticsArray.filter(element => element.uniqueTimeID === uniqueTimeID);
+
+                            if ( manipulateEntry.length === 0 ) {
+                                // create new item per day if nothing exist
+                                statisticsArray.push({ uniqueTimeID: uniqueTimeID, time: timestamp, 
+                                    chargeLevel: chargeLevel, 
+                                    volt: volt, 
+                                    currentAvg: currentAvg, 
+                                });
+                            } else {
+                                // manipulate the existing entry per day
+                                manipulateEntry[0].time = timestamp;
+                                manipulateEntry[0].chargeLevel = chargeLevel;
+                                manipulateEntry[0].volt = volt;
+                                manipulateEntry[0].currentAvg = currentAvg;
+                            }
+
+                            // cut array after 30 days
+                            if ( statisticsArray.length > 30 ) {
+                                statisticsArray.shift();
+                            }
+
+                            localStorage.setItem('statisticsArray', JSON.stringify(statisticsArray));
+
+                            var strList = '<ul class="list-group">'
+                            strList += '<li class="list-group-item active"> On phone stored statistics (max.30 days)</li>';
+
+                            statisticsArray.forEach(function(element) {
+                                strList += '<li class="list-group-item">'+ getTimestamp (element.time) + ' - ' + element.chargeLevel + '% (' + element.volt + 'V / ' + element.currentAvg + 'A)</li>';
+                            }); 
+
+                            strList += '</ul>';
+                            document.getElementById("listContainer").innerHTML = strList;
+
+                            // console.log('chargeLevel', chargeLevel);
+                            // console.log('capacity', capacity);
                         } else if(requestType === 'getCellVolts') {
                             let numCells = payload.getUint16(0);
                             let volts = [];
@@ -273,7 +322,7 @@
 
                 while(true) {
                     try {
-                        console.log('Starting battery read');
+                        // console.log('Starting battery read');
                         await requestReady();
                         await getTemps();
                         await requestReady();
