@@ -96,14 +96,6 @@
             <div class="alert alert-primary" role="alert" id="msgalert" style="display: none"></div>
 
             <div id="listContainer"></div>
-
-            <ul class="list-group">
-              <li class="list-group-item"><span class="timestamp">2021-05-26 06:46:33</span><br>Cras justo odio</li>
-              <li class="list-group-item">Dapibus ac facilisis in</li>
-              <li class="list-group-item">Morbi leo risus</li>
-              <li class="list-group-item">Porta ac consectetur ac</li>
-              <li class="list-group-item">Vestibulum at eros</li>
-            </ul>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
@@ -198,7 +190,7 @@
                             if (maxCurrent - minCurrent >= 3) {
                               currentArray.splice(0,7);
                             }
-                            
+
                             // create current Array for smooth out charge state estimation
                             currentArray.push(current);
                             if ( currentArray.length > 10 ) {
