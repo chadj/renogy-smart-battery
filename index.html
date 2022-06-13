@@ -206,7 +206,7 @@
                             let timestamp = new Date;
 
                             // create uID to store only the last value per day
-                            uniqueTimeID = '' + timestamp.getFullYear() + (timestamp.getMonth()+1) + (timestamp.getDate()+3) + '';
+                            uniqueTimeID = '' + timestamp.getFullYear() + (timestamp.getMonth()+1) + (timestamp.getDate()) + '';
 
                             manipulateEntry = statisticsArray.filter(element => element.uniqueTimeID === uniqueTimeID);
 
