@@ -9,53 +9,93 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
 
-    <title>Renogy 200ah Battery Status</title>
+    <title>Renogy Battery Status</title>
     <style>
+        body {
+            background-color: #484848;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .text-contrast {
+            color: white;
+        }
+
         .form-control:disabled, .form-control[readonly] {
             background-color: #fff;
             opacity: 1;
         }
         .input-group-text {
-            width: 200px;
+            width: 160px;
+        }
+        .timestamp {
+            font-size: 0.8em;
+        }
+        #myProgress {
+            background-color: white;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        #myProgress > span {
+            padding: 5px;
+        }
+
+        #myBar {
+            width: 0%;
+            padding: 10px;
+            background-color: #04AA6D;
+            text-align: center; /* To center it horizontally (if you want) */
+            color: white;
+            border-radius: 0px 0px 0px 5px;
         }
     </style>
   </head>
   <body>
     <div class="container">
-        <h1>Renogy 200ah Battery Status</h1>
+        <h1>Renogy Battery Status</h1>
+        
         <div id="battery-connect-container" class="container" style="padding-bottom: 20px">
             <button id="battery-connect" class="btn btn-primary">Connect</button>
+            <div class="text-contrast">(Chrome only)</div>
         </div>
         <div class="container">
-            <div class="input-group mb-3">
-                <span class="input-group-text" id="temperatures">Temperatures (°F)</span>
-                <input type="text" class="form-control" id="temperatures-form" aria-describedby="temperatures" disabled="true">
+            <div id="myProgress">
+                <span>Charge Level</span>
+                <div id="myBar">-</div>
             </div>
+            
             <div class="input-group mb-3">
-                <span class="input-group-text" id="level">Charge Level</span>
-                <input type="text" class="form-control" id="level-form" aria-describedby="level" disabled="true">
+                <span class="input-group-text" id="watts">Watts</span>
+                <input type="text" class="form-control" id="watts-form" aria-describedby="watts" disabled="true">
             </div>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="state">Charge State</span>
                 <input type="text" class="form-control" id="state-form" aria-describedby="state" disabled="true">
             </div>
             <div class="input-group mb-3">
-                <span class="input-group-text" id="volt">Volt</span>
+                <span class="input-group-text" id="temperatures">Temperatures</span>
+                <input type="text" class="form-control" id="temperatures-form" aria-describedby="temperatures" disabled="true">
+            </div>
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="volt">Volt/Current</span>
                 <input type="text" class="form-control" id="volt-form" aria-describedby="volt" disabled="true">
             </div>
             <div class="input-group mb-3">
-                <span class="input-group-text" id="current">Current</span>
-                <input type="text" class="form-control" id="current-form" aria-describedby="current" disabled="true">
-            </div>
-            <div class="input-group mb-3">
-                <span class="input-group-text" id="watts">Watts</span>
-                <input type="text" class="form-control" id="watts-form" aria-describedby="watts" disabled="true">
+                <span class="input-group-text" id="level">Charge Level</span>
+                <input type="text" class="form-control" id="level-form" aria-describedby="level" disabled="true">
             </div>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="cellvolts">Cell Volts</span>
                 <input type="text" class="form-control" id="cellvolts-form" aria-describedby="cellvolts" disabled="true">
             </div>
             <div class="alert alert-primary" role="alert" id="msgalert" style="display: none"></div>
+
+            <div id="listContainer"></div>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
@@ -65,10 +105,18 @@
         }
 
         const fmt = new Intl.NumberFormat('en-US', { maximumSignificantDigits: 4 });
+        let currentArray = [];
+        let statisticsArray = JSON.parse(localStorage.getItem('statisticsArray'));
+        if (!statisticsArray) {
+            statisticsArray = [];
+        }
+
+        let date = Date.now();
 
         let $bcc = document.getElementById('battery-connect-container');
         let $bc = document.getElementById('battery-connect');
         let $tf = document.getElementById('temperatures-form');
+        // let $tfC = document.getElementById('temperaturesC-form');
         let $vf = document.getElementById('volt-form');
         let $cf = document.getElementById('current-form');
         let $lf = document.getElementById('level-form');
@@ -76,6 +124,15 @@
         let $sf = document.getElementById('state-form');
         let $wf = document.getElementById('watts-form');
         let $msg = document.getElementById('msgalert');
+        let elem = document.getElementById("myBar");
+        let width = 1;
+
+        function getTimestamp (time) {
+        const pad = (n,s=2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
+        const d = new Date(time);
+        
+        return `${pad(d.getFullYear(),4)}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        }
         
         $bc.onclick = (e) => {
             e.preventDefault();
@@ -106,33 +163,102 @@
                     try {
                         const packet = event.target.value;
                         const payload = new DataView(packet.buffer, 3);
+                        // console.log('payload', payload);
 
                         if(requestType === 'getTemps') {
                             let numSensors = payload.getUint16(0);
                             let temps = [];
+                            let tempsC = [];
                             for(let x=1; x <= numSensors; x++) {
-                                let temp = (payload.getInt16(x*2) / 10) * (9/5) + 32;
-                                temps.push(fmt.format(temp));
+                                // console.log('sensors', payload.getInt16(x*2));
+                                let tempF = (payload.getInt16(x*2) / 10) * (9/5) + 32;
+                                let tempC = (payload.getInt16(x*2) / 10);
+                                temps.push(fmt.format(tempF));
+                                tempsC.push(fmt.format(tempC));
                             }
-                            $tf.value = temps.join(', ');
+                            $tf.value = tempsC.join(', ') + ' °C / ' + temps.join(', ') + ' °F';
                         } else if(requestType === 'getLevels') {
                             let current = payload.getInt16(0) / 100;
                             let volt = payload.getUint16(2) / 10;
                             let chargeLevel = payload.getUint32(4) / 1000;
                             let capacity = payload.getUint32(8) / 1000;
 
-                            let state = '-';
-                            if(current > 0) {
-                                state = fmt.format(Math.abs((capacity - chargeLevel) / current)) + " hours till charged";
-                            } else if(current < 0) {
-                                state = fmt.format(Math.abs(chargeLevel / current)) + " hours till depleted";
+                            const maxCurrent = Math.max(...currentArray);
+                            const minCurrent = Math.min(...currentArray);
+
+                            // if there is an abruptly current change, we need to adapt average values faster
+                            if (maxCurrent - minCurrent >= 3) {
+                              currentArray.splice(0,7);
                             }
 
-                            $vf.value = volt;
-                            $cf.value = current;
+                            // create current Array for smooth out charge state estimation
+                            currentArray.push(current);
+                            if ( currentArray.length > 10 ) {
+                                currentArray.shift();
+                            }
+                            const currentSum = currentArray.reduce((a, b) => a + b, 0);
+                            const currentAvg = (currentSum / currentArray.length).toFixed(2) || 0;
+
+                            let state = '-';
+                            if(current > 0) {
+                                state = fmt.format(Math.abs((capacity - chargeLevel) / currentAvg).toFixed(2)) + " hours till charged";
+                            } else if(current < 0) {
+                                state = fmt.format(Math.abs(chargeLevel / currentAvg).toFixed(2)) + " hours till depleted";
+                            }
+
+                            $vf.value = volt + ' / ' + currentAvg;
+                            // $cf.value = currentAvg;
                             $lf.value = fmt.format((chargeLevel / capacity) * 100) + "% (" + chargeLevel + "/" + capacity + ")";
                             $sf.value = state;
-                            $wf.value = fmt.format(current * volt);
+                            $wf.value = fmt.format((currentAvg * volt).toFixed(0));
+
+                            elem.style.width = chargeLevel + "%";
+                            elem.innerHTML = chargeLevel + "%";
+
+
+                            // create a timestamp, update on every new poll to store the last infos
+                            // let timestamp = Date.now();
+                            let timestamp = new Date;
+
+                            // create uID to store only the last value per day
+                            uniqueTimeID = '' + timestamp.getFullYear() + (timestamp.getMonth()+1) + (timestamp.getDate()) + '';
+
+                            manipulateEntry = statisticsArray.filter(element => element.uniqueTimeID === uniqueTimeID);
+
+                            if ( manipulateEntry.length === 0 ) {
+                                // create new item per day if nothing exist
+                                statisticsArray.push({ uniqueTimeID: uniqueTimeID, time: timestamp, 
+                                    chargeLevel: chargeLevel, 
+                                    volt: volt, 
+                                    currentAvg: currentAvg, 
+                                });
+                            } else {
+                                // manipulate the existing entry per day
+                                manipulateEntry[0].time = timestamp;
+                                manipulateEntry[0].chargeLevel = chargeLevel;
+                                manipulateEntry[0].volt = volt;
+                                manipulateEntry[0].currentAvg = currentAvg;
+                            }
+
+                            // cut array after 30 days
+                            if ( statisticsArray.length > 30 ) {
+                                statisticsArray.shift();
+                            }
+
+                            localStorage.setItem('statisticsArray', JSON.stringify(statisticsArray));
+
+                            var strList = '<ul class="list-group">'
+                            strList += '<li class="list-group-item active"> On phone stored statistics (max.30 days)</li>';
+
+                            statisticsArray.forEach(function(element) {
+                                strList += '<li class="list-group-item"><span class="timestamp">'+ getTimestamp (element.time) + '</span><br>' + element.chargeLevel + '% (' + element.volt + 'V / ' + element.currentAvg + 'A)</li>';
+                            }); 
+
+                            strList += '</ul>';
+                            document.getElementById("listContainer").innerHTML = strList;
+
+                            // console.log('chargeLevel', chargeLevel);
+                            // console.log('capacity', capacity);
                         } else if(requestType === 'getCellVolts') {
                             let numCells = payload.getUint16(0);
                             let volts = [];
@@ -211,7 +337,7 @@
 
                 while(true) {
                     try {
-                        //console.log('Starting battery read');
+                        // console.log('Starting battery read');
                         await requestReady();
                         await getTemps();
                         await requestReady();
@@ -224,7 +350,7 @@
                         $msg.innerHTML = err;
                     }
 
-                    await timeout(10000);
+                    await timeout(3000);
                 }
 
             })().catch((err) => {
