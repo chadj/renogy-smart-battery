@@ -208,12 +208,13 @@
 
                             $vf.value = volt + ' / ' + currentAvg;
                             // $cf.value = currentAvg;
-                            $lf.value = fmt.format((chargeLevel / capacity) * 100) + "% (" + chargeLevel + "/" + capacity + ")";
+                            let chargePercent = (chargeLevel / capacity) * 100;
+                            $lf.value = fmt.format(chargePercent) + "% (" + chargeLevel + "/" + capacity + ")";
                             $sf.value = state;
-                            $wf.value = fmt.format((currentAvg * volt).toFixed(0));
+                            $wf.value = fmt.format((currentAvg * volt).toFixed(2));
 
-                            elem.style.width = chargeLevel + "%";
-                            elem.innerHTML = chargeLevel + "%";
+                            elem.style.width = fmt.format(chargePercent) + "%";
+                            elem.innerHTML = fmt.format(chargePercent) + "%";
 
 
                             // create a timestamp, update on every new poll to store the last infos
@@ -228,14 +229,14 @@
                             if ( manipulateEntry.length === 0 ) {
                                 // create new item per day if nothing exist
                                 statisticsArray.push({ uniqueTimeID: uniqueTimeID, time: timestamp, 
-                                    chargeLevel: chargeLevel, 
+                                    chargeLevel: fmt.format(chargePercent), 
                                     volt: volt, 
                                     currentAvg: currentAvg, 
                                 });
                             } else {
                                 // manipulate the existing entry per day
                                 manipulateEntry[0].time = timestamp;
-                                manipulateEntry[0].chargeLevel = chargeLevel;
+                                manipulateEntry[0].chargeLevel = fmt.format(chargePercent);
                                 manipulateEntry[0].volt = volt;
                                 manipulateEntry[0].currentAvg = currentAvg;
                             }
