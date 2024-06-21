@@ -212,9 +212,15 @@
 
                             let state = '-';
                             if(current > 0) {
-                                state = fmt.format(Math.abs((capacity - chargeLevel) / currentAvg).toFixed(2)) + " hours till charged";
+                                let duration = Math.abs((capacity - chargeLevel) / currentAvg).toFixed(3);
+                                let hours = Math.floor(duration);
+                                let minutes = Math.round((duration - hours) * 60);
+                                state = fmt.format(hours) + " hours " + fmt.format(minutes) + " minutes till charged";
                             } else if(current < 0) {
-                                state = fmt.format(Math.abs(chargeLevel / currentAvg).toFixed(2)) + " hours till depleted";
+                                let duration = Math.abs(chargeLevel / currentAvg).toFixed(3);
+                                let hours = Math.floor(duration);
+                                let minutes = Math.round((duration - hours) * 60);
+                                state = fmt.format(hours) + " hours " + fmt.format(minutes) + " hours till depleted";
                             }
 
                             $vf.value = volt + ' / ' + currentAvg;
