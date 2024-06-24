@@ -214,13 +214,13 @@
                             if(current > 0) {
                                 let duration = Math.abs((capacity - chargeLevel) / currentAvg).toFixed(3);
                                 let hours = Math.floor(duration);
-                                let minutes = Math.round((duration - hours) * 60);
-                                state = fmt.format(hours) + " hours " + fmt.format(minutes) + " minutes till charged";
+                                let minutes = new String(Math.round((duration - hours) * 60)).padStart(2, '0');
+                                state = fmt.format(hours) + "h " + minutes + "m till charged";
                             } else if(current < 0) {
                                 let duration = Math.abs(chargeLevel / currentAvg).toFixed(3);
                                 let hours = Math.floor(duration);
-                                let minutes = Math.round((duration - hours) * 60);
-                                state = fmt.format(hours) + " hours " + fmt.format(minutes) + " minutes till depleted";
+                                let minutes = new String(Math.round((duration - hours) * 60)).padStart(2, '0');
+                                state = fmt.format(hours) + "h " + minutes + "m till depleted";
                             }
 
                             $vf.value = volt + ' / ' + currentAvg;
